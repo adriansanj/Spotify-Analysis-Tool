@@ -9,8 +9,9 @@ def create_clean_dataframe(json_files):
 
     df_clean = pd.DataFrame()
     df_clean['timestamp'] = pd.to_datetime(df['ts'])
-    df_clean['date'] = df_clean['timestamp'].dt.date
-    df_clean["calendar_week"] = df_clean["timestamp"].dt.to_period("W")
+    df_clean['day'] = df_clean['timestamp'].dt.date
+    df_clean["week"] = df_clean["timestamp"].dt.to_period("W")
+    df_clean['month'] = df_clean['timestamp'].dt.to_period("M")
     df_clean['artist'] = df['master_metadata_album_artist_name']
     df_clean['track'] = df['master_metadata_track_name']
     df_clean['minutes'] = df['ms_played']/1000/60
