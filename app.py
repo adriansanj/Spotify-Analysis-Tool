@@ -160,15 +160,15 @@ if uploaded_files:
         d4.markdown(f":musical_note: **Total Minutes Played**")
         d4.write(f"**{filtered_df['minutes'].sum():,.0f} minutes**")
 
-    if not selected_song:
-        # Unique Songs Played
-        d5.markdown(f":headphones: **Unique Songs Played**")
-        d5.write(f"**{filtered_df['track'].nunique()} songs**")
-    else:
-        d5.markdown(f":headphones: **Percentage of Artist represented by song**")
-        total_minutes_artist = df[df["artist"] == selected_artist]["minutes"].sum()
-        total_minutes_artist_song = filtered_df["minutes"].sum()
-        d5.write(f"**{total_minutes_artist_song/total_minutes_artist:,.2%}**")
+        if not selected_song:
+            # Unique Songs Played
+            d5.markdown(f":headphones: **Unique Songs Played**")
+            d5.write(f"**{filtered_df['track'].nunique()} songs**")
+        else:
+            d5.markdown(f":headphones: **Percentage of Artist represented by song**")
+            total_minutes_artist = df[df["artist"] == selected_artist]["minutes"].sum()
+            total_minutes_artist_song = filtered_df["minutes"].sum()
+            d5.write(f"**{total_minutes_artist_song/total_minutes_artist:,.2%}**")
 
 
     if not filtered_df.empty:
@@ -200,7 +200,7 @@ if uploaded_files:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-
+    st.markdown("---")
 
 # ---------- Personal Advanced Stats ----------
 
