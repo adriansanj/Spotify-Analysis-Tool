@@ -28,6 +28,21 @@ if uploaded_files:
 
     st.markdown("---")
 
+    st.write("### Filter Data by Date")
+    a1,a2,a3 = st.columns((0.1,0.1,1))
+    
+    min_time = df["timestamp"].min()
+    max_time = df["timestamp"].max()
+
+    # Streamlit slider for time range selection
+    start_date = a1.date_input("Start date:", value=min_time.to_pydatetime().date(), min_value=min_time.to_pydatetime().date(), max_value=max_time.to_pydatetime().date())
+    end_date = a2.date_input("End date:", value=max_time.to_pydatetime().date(), min_value=min_time.to_pydatetime().date(), max_value=max_time.to_pydatetime().date())
+
+    df = df[(df["timestamp"] >= pd.Timestamp(start_date, tz="UTC")) & 
+                     (df["timestamp"] <= pd.Timestamp(end_date, tz="UTC"))]
+    
+    st.markdown("---")
+
     h1,h2,h3 = st.columns((1,1,1))
 
     
