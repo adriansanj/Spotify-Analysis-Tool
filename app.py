@@ -8,17 +8,15 @@ import plotly.express as px
 from src.data_processing import create_clean_dataframe
 from src.stats import get_most_listened_artists, get_most_listened_songs, get_most_no1_artists, get_most_no1_songs
 
-from configurations.streamlit_config import table_layout
+from configurations.streamlit_config import table_layout, DARK_GREEN, DARK_GREEN_TRANSPARENT
 import os
-
-DARK_GREEN = '#022100'
 
 # data_files = [f for f in os.listdir('data') if f.endswith('.json')]
 # df = create_clean_dataframe(data_files)
 
 st.set_page_config(page_title='Personal Spotify',  layout='wide', page_icon=':microphone:')
 
-st.title('Personal Spotify Wrapped')
+st.title('Spotify Personal Data Analysis')
 
 uploaded_files = st.file_uploader("Upload extended streaming history json files", help="Drag and drop doesn't work properly", accept_multiple_files=True)
 
@@ -198,13 +196,19 @@ if uploaded_files:
                 tickfont=dict(size=10),  # Adjust the font size for the x-axis labels
             ),
         )
+        fig.update_traces(
+            line=dict(
+                color=DARK_GREEN,  
+                width=2,                       
+            )
+        )
         st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("---")
 
-# ---------- Personal Advanced Stats ----------
+# ---------- Listening habits ----------
 
-    st.subheader('Personal Advanced Stats')
+    st.subheader('Listening Habits')
 
     if not df.empty:
         grouped_df = df.groupby(["week"]).agg({"minutes": "sum"}).sort_values("week").reset_index()
@@ -215,26 +219,9 @@ if uploaded_files:
         grouped_df = all_weeks_df.merge(grouped_df, on='week', how='left')
         grouped_df["minutes"] = grouped_df["minutes"].fillna(0)
         grouped_df["week"] = grouped_df["week"].astype(str)
-
-        # fig = px.line(
-        #     grouped_df,
-        #     x="week",
-        #     y="minutes",
-        #     title="Total Streamed Minutes per Week",
-        #     markers=True,
-        # )
-        # fig.update_layout(
-        #     xaxis_title="Calendar Week",
-        #     yaxis_title="Streamed Minutes",
-        #     template="plotly_white",
-        #     xaxis=dict(
-        #         tickangle=-45,  # Rotate the x-axis labels to avoid overlap
-        #         tickfont=dict(size=10),  # Adjust the font size for the x-axis labels
-        #     ),
-        # )
-        # st.plotly_chart(fig, use_container_width=True)
         grouped_df["minutes"] = grouped_df["minutes"].astype(float)
         grouped_df["moving_avg"] = grouped_df["minutes"].rolling(window=10).mean().astype(float)
+
         fig = go.Figure()
 
         # Add the "minutes" line with markers
@@ -242,6 +229,11 @@ if uploaded_files:
             x=grouped_df['week'],
             y=grouped_df['minutes'],
             mode='lines+markers',  # 'lines+markers' to include points for the "minutes"
+            line=dict(
+                color=DARK_GREEN_TRANSPARENT, 
+                width=2,       
+                dash='solid',
+            ),
             name='Streamed Minutes'
         ))
         # Add the "moving_avg" line without markers
@@ -249,6 +241,11 @@ if uploaded_files:
             x=grouped_df['week'],
             y=grouped_df['moving_avg'],
             mode='lines',  # 'lines' mode removes markers for the moving average
+            line=dict(
+                color=DARK_GREEN, 
+                width=2,       
+                dash='solid'  
+            ),
             name='10-Week Moving Average'
         ))
 
@@ -266,3 +263,53 @@ if uploaded_files:
 
         # Display the plot in Streamlit
         st.plotly_chart(fig, use_container_width=True)
+
+
+        # Group by hour and sum the minutes
+        hourly_df = df.groupby(df['hour']).agg({"minutes": "sum"}).reset_index()
+        hourly_df["hour"] = hourly_df["hour"].astype(int)
+
+        # Create a bar chart
+        fig_hourly = px.bar(
+            hourly_df,
+            x="hour",
+            y="minutes",
+            title="Total Listened Minutes by Hour of the Day",
+            labels={"hour": "Hour of the Day", "minutes": "Total Minutes"},
+            orientation='v',
+            color_discrete_sequence=[DARK_GREEN],
+        )
+        
+
+        fig_hourly.update_layout(
+            xaxis=dict(
+                tickmode='linear',
+                tick0=0,
+                dtick=1,
+            ),
+            yaxis_title="Total Minutes",
+            xaxis_title="Hour of the Day",
+        )
+
+        st.plotly_chart(fig_hourly, use_container_width=True)
+        # Group by hour and find the most listened artist and song
+        hourly_artist_song = df.groupby('hour').apply(lambda x: pd.Series({
+            'artist': x.groupby('artist')['minutes'].sum().idxmax(),
+            'song': x.groupby('track')['minutes'].sum().idxmax(),
+            'minutes': x['minutes'].sum()
+        })).reset_index()
+
+        fig_hourly_artist_song = go.Figure(data=[go.Table(
+            header=dict(values=['Hour', 'Most Listened Artist', 'Most Listened Song'],
+                        fill_color=DARK_GREEN,
+                        font=dict(size=12, color='white'),
+                        align='left'),
+            cells=dict(values=[hourly_artist_song['hour'], hourly_artist_song['artist'], hourly_artist_song['song']],
+                    font=dict(size=12, color='black'),
+                    align='left'),
+            )
+        ])
+        fig_hourly_artist_song.update_layout(table_layout,
+                                             title_text='Most Listened Artist and Song by Hour of the Day')
+
+        st.plotly_chart(fig_hourly_artist_song, use_container_width=True)
