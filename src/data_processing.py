@@ -9,6 +9,7 @@ def create_clean_dataframe(json_files):
 
     df_clean = pd.DataFrame()
     df_clean['timestamp'] = pd.to_datetime(df['ts'])
+    df_clean['hour'] = df_clean['timestamp'].dt.hour
     df_clean['day'] = df_clean['timestamp'].dt.date
     df_clean["week"] = df_clean["timestamp"].dt.to_period("W")
     df_clean['month'] = df_clean['timestamp'].dt.to_period("M")
